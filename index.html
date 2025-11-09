@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>THE CONFIGURATIONATOR</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Odibee+Sans&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: white;
+      }
+      .btn-primary {
+        background-color: #0675cd;
+        color: white;
+        transition: background-color 0.3s ease;
+      }
+      .btn-primary:hover {
+        background-color: #055aa3;
+      }
+      .app-title {
+        font-family: "Odibee Sans", sans-serif;
+      }
+      .info-box {
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: left;
+        max-width: 900px; /* Increased by 50% from 600px */
+        margin-left: auto;
+        margin-right: auto;
+      }
+      /* Zoll-themed header styles */
+      .zoll-header {
+        background-color: #0675cd;
+        color: white;
+        padding: 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .zoll-header .header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .zoll-header .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+      }
+      .zoll-header .logo-section img {
+        height: 40px;
+        width: auto;
+      }
+      .zoll-header .right-section {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+      .zoll-header .search-icon,
+      .zoll-header .language-selector {
+        color: white;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+      }
+      .zoll-header .search-icon:hover,
+      .zoll-header .language-selector:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+      .zoll-header .language-selector {
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      @media (max-width: 768px) {
+        .zoll-header .header-content {
+          padding: 1rem;
+        }
+        .zoll-header .logo-section {
+          gap: 1rem;
+        }
+        .zoll-header .logo-section img {
+          height: 32px;
+        }
+      }
+
+      /* Breadcrumb styles */
+      .breadcrumb {
+        background-color: #0056b3;
+        border-bottom: 1px solid #e9ecef;
+        padding: 0.25rem 0;
+      }
+      .breadcrumb-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+      }
+      .breadcrumb-home {
+        color: white;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: color 0.3s ease;
+      }
+      .breadcrumb-home:hover {
+        color: #e0e0e0;
+        text-decoration: underline;
+      }
+      .breadcrumb-home svg {
+        flex-shrink: 0;
+      }
+      .breadcrumb-separator {
+        color: #e0e0e0;
+        margin: 0 0.5rem;
+        font-size: 0.9rem;
+      }
+      .breadcrumb-current {
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      @media (max-width: 768px) {
+        .breadcrumb-content {
+          padding: 0 1rem;
+        }
+        .breadcrumb-home {
+          font-size: 0.85rem;
+        }
+        .breadcrumb-current {
+          font-size: 0.85rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <header class="zoll-header">
+      <div class="header-content">
+        <div class="logo-section">
+          <img src="logo-ce.png" alt="ZOLL Clinical Education Logo" />
+          <img
+            src="logo-configurationator.png"
+            alt="The Configurationator Logo"
+          />
+        </div>
+        <div class="right-section">
+          <div class="search-icon">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div class="language-selector">
+            <span>EN</span>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6 9L12 15L18 9"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="breadcrumb">
+      <div class="breadcrumb-content">
+        <a href="index.html" class="breadcrumb-home">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <polyline
+              points="9,22 9,12 15,12 15,22"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Home
+        </a>
+      </div>
+    </nav>
+
+    <main class="flex-grow pt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="info-box">
+          <h2 class="text-xl font-semibold text-gray-800 mb-2">
+            Welcome to The Configurationator
+          </h2>
+          <p class="text-gray-600">
+            Select a configuration option below to start building your
+            customized config tables for the ZOLL R Series. Keep in mind that
+            ALL values in the third colummn are editable to your needs! Once you
+            have your settings chosen, simply save/export it as a PNG or PDF.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <a
+            href="config.html?type=onestep"
+            class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
+            >OneStep Config</a
+          >
+          <a
+            href="config.html?type=procedural"
+            class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
+            >Procedural Config</a
+          >
+          <a
+            href="config.html?type=nicu"
+            class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
+            >NICU Config</a
+          >
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

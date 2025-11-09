@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Configurationator</title>
+    <link href="styles.css" rel="stylesheet" />
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="breadcrumb">
+      <div class="breadcrumb-content">
+        <a href="index.html" class="breadcrumb-home">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <polyline
+              points="9,22 9,12 15,12 15,22"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Home
+        </a>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-current" id="breadcrumb-current"
+          >Loading...</span
+        >
+      </div>
+    </nav>
+
+    <div class="button-row">
+      <div class="button-container-left">
+        <button class="manual-button back-home-btn">Back<br />Home</button>
+        <button class="manual-button reset-tables-btn">
+          Reset<br />Tables
+        </button>
+      </div>
+      <div class="button-container-right">
+        <button class="manual-button screenshot-btn">
+          Take<br />Screenshot!
+        </button>
+        <button class="manual-button export-pdf-btn">Export<br />as PDF</button>
+      </div>
+    </div>
+
+    <!-- Modal Dialog for PDF Save -->
+    <div id="pdfModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Save Configuration Report</h3>
+        </div>
+        <div class="modal-body">
+          <div class="filename-section">
+            <label for="filenameInput">Filename:</label>
+            <input type="text" id="filenameInput" class="filename-input" />
+          </div>
+          <div class="preview-section">
+            <p>Preview of captured configuration:</p>
+            <div class="preview-container">
+              <img
+                id="previewImage"
+                src=""
+                alt="Configuration Preview"
+                style="
+                  max-width: 100%;
+                  max-height: 300px;
+                  border: 1px solid #ddd;
+                "
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelBtn" class="modal-btn cancel-btn">Cancel</button>
+          <button id="saveBtn" class="modal-btn save-btn">Save PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <img src="logo-ce.png" alt="ZOLL Configurationator Logo" class="logo" />
+      <h1 id="page-title">Loading...</h1>
+      <span class="sub-title" contenteditable="true">Hospital XYZ</span>
+
+      <div id="content-container">
+        <!-- Tables will be dynamically generated here -->
+      </div>
+    </div>
+
+    <script>
+      // Load configuration data based on URL parameter
+      function loadConfigData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const configType = urlParams.get("type") || "onestep";
+
+        let data;
+        switch (configType) {
+          case "procedural":
+            data = proceduralData;
+            break;
+          case "nicu":
+            data = nicuData;
+            break;
+          default:
+            data = onestepData;
+        }
+
+        // Directly use the embedded data
+        renderConfigPage(data);
+      }
+
+      function renderConfigPage(data) {
+        // Set page title
+        document.getElementById("page-title").textContent = data.title;
+
+        // Update breadcrumb with current page title
+        document.getElementById("breadcrumb-current").textContent = data.title;
+
+        // Generate HTML for all sections
+        const container = document.getElementById("content-container");
+        container.innerHTML = data.sections
+          .map(
+            (section) => `
+          <div class="table-section">
+            <h2 id="${section.id}">${section.title}</h2>
+            <table aria-labelledby="${section.id}">
+              <tr>
+                ${section.headers
+                  .map((header) =>
+                    header === "ZOLL Team Rec's"
+                      ? `<th scope="col" class="editable-header" contenteditable="true" aria-label="${header}">${header}</th>`
+                      : `<th scope="col">${header}</th>`
+                  )
+                  .join("")}
+              </tr>
+              ${section.rows
+                .map(
+                  (row) => `
+                <tr>
+                  <td>${row[0]}</td>
+                  <td>${row[1]}</td>
+                  <td contenteditable="true">${row[2]}</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </table>
+          </div>
+        `
+          )
+          .join("");
+
+        // Apply diff highlighting after tables are rendered
+        highlightDiffRows();
+
+        // Setup editable cells event listeners
+        setupEditableCells();
+
+        // Setup editable headers synchronization
+        setupEditableHeaders();
+      }
+
+      // Load config data when page loads
+      loadConfigData();
+    </script>
+  </body>
+</html>
