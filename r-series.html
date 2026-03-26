@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>THE CONFIGURATIONATOR</title>
+    <title>THE CONFIGURATIONATOR – R Series</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
@@ -34,7 +34,7 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
         text-align: left;
-        max-width: 900px; /* Increased by 50% from 600px */
+        max-width: 900px;
         margin-left: auto;
         margin-right: auto;
       }
@@ -226,6 +226,8 @@
           </svg>
           Home
         </a>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-current">R Series Config</span>
       </div>
     </nav>
 
@@ -233,25 +235,30 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div class="info-box">
           <h2 class="text-xl font-semibold text-gray-800 mb-2">
-            Welcome to The Configurationator
+            R Series Configuration
           </h2>
           <p class="text-gray-600">
-            Select a device series below to start building your customized
-            configuration tables. Keep in mind that ALL values in the third
-            column are editable to your needs! Once you have your settings
-            chosen, simply save/export it as a PNG or PDF.
+            Select a configuration option below to start building your
+            customized config tables for the ZOLL R Series. Keep in mind that
+            ALL values in the third column are editable to your needs! Once you
+            have your settings chosen, simply save/export it as a PNG or PDF.
           </p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-xl mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <a
-            href="r-series.html"
+            href="config.html?type=onestep"
             class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
-            >Create R Series Config</a
+            >OneStep Config</a
           >
           <a
-            href="x-series.html"
+            href="config.html?type=procedural"
             class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
-            >Create X Series Config</a
+            >Procedural Config</a
+          >
+          <a
+            href="config.html?type=nicu"
+            class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
+            >NICU Config</a
           >
         </div>
       </div>

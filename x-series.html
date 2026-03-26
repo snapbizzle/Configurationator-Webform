@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>THE CONFIGURATIONATOR</title>
+    <title>THE CONFIGURATIONATOR – X Series</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
@@ -17,26 +17,8 @@
         font-family: "Inter", sans-serif;
         background-color: white;
       }
-      .btn-primary {
-        background-color: #0675cd;
-        color: white;
-        transition: background-color 0.3s ease;
-      }
-      .btn-primary:hover {
-        background-color: #055aa3;
-      }
       .app-title {
         font-family: "Odibee Sans", sans-serif;
-      }
-      .info-box {
-        background-color: #f3f4f6;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        text-align: left;
-        max-width: 900px; /* Increased by 50% from 600px */
-        margin-left: auto;
-        margin-right: auto;
       }
       /* Zoll-themed header styles */
       .zoll-header {
@@ -146,6 +128,44 @@
           font-size: 0.85rem;
         }
       }
+
+      /* Work in progress styles */
+      .wip-container {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+        padding: 4rem 2rem;
+      }
+      .wip-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+      }
+      .wip-title {
+        font-family: "Odibee Sans", sans-serif;
+        font-size: 2.5rem;
+        color: #0675cd;
+        margin-bottom: 1rem;
+      }
+      .wip-message {
+        font-size: 1.125rem;
+        color: #6b7280;
+        line-height: 1.75;
+        margin-bottom: 2rem;
+      }
+      .back-btn {
+        display: inline-block;
+        background-color: #0675cd;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+      }
+      .back-btn:hover {
+        background-color: #055aa3;
+      }
     </style>
   </head>
   <body class="min-h-screen flex flex-col">
@@ -226,34 +246,20 @@
           </svg>
           Home
         </a>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-current">X Series Config</span>
       </div>
     </nav>
 
-    <main class="flex-grow pt-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div class="info-box">
-          <h2 class="text-xl font-semibold text-gray-800 mb-2">
-            Welcome to The Configurationator
-          </h2>
-          <p class="text-gray-600">
-            Select a device series below to start building your customized
-            configuration tables. Keep in mind that ALL values in the third
-            column are editable to your needs! Once you have your settings
-            chosen, simply save/export it as a PNG or PDF.
-          </p>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-xl mx-auto">
-          <a
-            href="r-series.html"
-            class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
-            >Create R Series Config</a
-          >
-          <a
-            href="x-series.html"
-            class="btn-primary py-4 px-6 rounded-lg text-lg font-semibold"
-            >Create X Series Config</a
-          >
-        </div>
+    <main class="flex-grow flex items-center justify-center">
+      <div class="wip-container">
+        <div class="wip-icon">🚧</div>
+        <h1 class="wip-title">Work in Progress</h1>
+        <p class="wip-message">
+          X Series configuration is on its way! Our team is actively working on
+          bringing you this feature. Check back soon for updates.
+        </p>
+        <a href="index.html" class="back-btn">← Back to Home</a>
       </div>
     </main>
   </body>
