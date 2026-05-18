@@ -785,11 +785,31 @@ function resetTables() {
   alert("All tables have been reset to default values.");
 }
 
+// Hide/show the "Default Value" column (index 1) in all tables for export
+function hideDefaultValueColumns() {
+  document.querySelectorAll("table").forEach((table) => {
+    table.querySelectorAll("tr").forEach((row) => {
+      const cell = row.cells[1];
+      if (cell) cell.style.display = "none";
+    });
+  });
+}
+
+function showDefaultValueColumns() {
+  document.querySelectorAll("table").forEach((table) => {
+    table.querySelectorAll("tr").forEach((row) => {
+      const cell = row.cells[1];
+      if (cell) cell.style.display = "";
+    });
+  });
+}
+
 // PNG Screenshot functionality
 function takeScreenshot() {
   // Hide all buttons including ZOLL button for screenshots
   const buttons = document.querySelectorAll(".manual-button");
   buttons.forEach((btn) => (btn.style.display = "none"));
+  hideDefaultValueColumns();
 
   html2canvas(document.body, {
     height: document.body.scrollHeight,
@@ -800,11 +820,13 @@ function takeScreenshot() {
     allowTaint: true,
   })
     .then(function (canvas) {
+      showDefaultValueColumns();
       buttons.forEach((btn) => (btn.style.display = "inline-block"));
       showModal(canvas, "png");
     })
     .catch(function (error) {
       console.error("Screenshot failed:", error);
+      showDefaultValueColumns();
       buttons.forEach((btn) => (btn.style.display = "inline-block"));
       alert("Failed to capture screenshot. Please try again.");
     });
@@ -817,6 +839,7 @@ function exportAsPDF() {
     ".back-home-btn, .reset-tables-btn, .screenshot-btn, .export-pdf-btn"
   );
   buttonsToHide.forEach((btn) => (btn.style.display = "none"));
+  hideDefaultValueColumns();
 
   html2canvas(document.body, {
     height: document.body.scrollHeight,
@@ -827,11 +850,13 @@ function exportAsPDF() {
     allowTaint: true,
   })
     .then(function (canvas) {
+      showDefaultValueColumns();
       buttonsToHide.forEach((btn) => (btn.style.display = "inline-block"));
       showModal(canvas, "pdf");
     })
     .catch(function (error) {
       console.error("Screenshot failed:", error);
+      showDefaultValueColumns();
       buttonsToHide.forEach((btn) => (btn.style.display = "inline-block"));
       alert("Failed to capture screenshot. Please try again.");
     });
