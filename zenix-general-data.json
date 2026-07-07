@@ -1,0 +1,363 @@
+{
+  "title": "ZOLL Zenix Config Tables - General Config",
+  "sections": [
+    {
+      "id": "device-identification",
+      "title": "DEVICE IDENTIFICATION",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "HR/PR Tone",
+          "ON/OFF",
+          "OFF"
+        ],
+        [
+          "Enable Voice Prompts",
+          "YES/NO",
+          "YES"
+        ],
+        [
+          "Default Volume",
+          "1,2,3,4,5,6,7,8,9,10",
+          "9"
+        ],
+        [
+          "Minimum Volume",
+          "1,2,3,4,5,6,7,8,9,10",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "accuvent-bvm",
+      "title": "ACCUVENT/BVM",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Default Tidal Volume",
+          "300 mL, 350 mL, 400 mL, 450 mL, 500 mL, 550 mL, 600 mL, 650 mL, 700 mL",
+          "450 mL"
+        ],
+        [
+          "Default Target Breath Rate",
+          "OFF, 8, 9, 10, 11, 12, 14, 16, 20, 25, 30:2",
+          "30:2"
+        ],
+        [
+          "Target CPR Pads Breath Rate",
+          "OFF, 8, 9, 10, 11, 12, 14, 16, 20, 25, 30:2",
+          "30:2"
+        ],
+        [
+          "Auto Display VT Bar Graph",
+          "ON/OFF",
+          "OFF"
+        ]
+      ]
+    },
+    {
+      "id": "pacer",
+      "title": "PACER",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Pacer Rate (PPM)",
+          "30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120",
+          "70 PPM"
+        ],
+        [
+          "Allow Fixed Pacer Mode",
+          "YES/NO",
+          "YES"
+        ]
+      ]
+    },
+    {
+      "id": "aed-advisory-general",
+      "title": "AED / ADVISORY GENERAL",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Power Up Mode",
+          "AED/MANUAL",
+          "AED"
+        ],
+        [
+          "Default Patient Mode",
+          "ADULT/PEDIATRIC/NEONATE",
+          "ADULT"
+        ],
+        [
+          "Manual Mode Analysis (Analyze Button)",
+          "SINGLE ANALYSIS/CPR PROTOCOL",
+          "CPR PROTOCOL"
+        ],
+        [
+          "Enable RapidShock",
+          "OFF, AED and CPR Protocol, AED Mode Only",
+          "AED & CPR PROTOCOL"
+        ],
+        [
+          "Disarm Timeout",
+          "30 SECONDS/60 SECONDS",
+          "60 SECONDS"
+        ]
+      ]
+    },
+    {
+      "id": "cpr",
+      "title": "CPR",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Auto Add Filtered ECG",
+          "ON/OFF",
+          "ON"
+        ],
+        [
+          "Auto Display Compression Trace",
+          "ON/OFF",
+          "OFF"
+        ],
+        [
+          "Metronome Rate",
+          "105",
+          "110"
+        ]
+      ]
+    },
+    {
+      "id": "alarms",
+      "title": "ALARMS",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Power Up Mode",
+          "AED/MANUAL",
+          "AED"
+        ],
+        [
+          "Default Patient Mode",
+          "ADULT/PEDIATRIC/NEONATE",
+          "ADULT"
+        ],
+        [
+          "Alarm Audio",
+          "ON/OFF",
+          "OFF"
+        ]
+      ]
+    },
+    {
+      "id": "localization",
+      "title": "LOCALIZATION",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Time Format",
+          "12 HOURS/24 HOURS",
+          "24 HOURS"
+        ],
+        [
+          "Time Zone",
+          "UTC OFFSET",
+          "UTC OFFSET = -5"
+        ],
+        [
+          "Length Units",
+          "IN/CM",
+          "IN"
+        ],
+        [
+          "Temp Units",
+          "F/C",
+          "F"
+        ]
+      ]
+    },
+    {
+      "id": "printer-snapshot",
+      "title": "PRINTER SNAPSHOT",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Print on Analysis Results",
+          "ON/OFF",
+          ""
+        ],
+        [
+          "Print on Snapshot",
+          "ON/OFF",
+          ""
+        ]
+      ]
+    },
+    {
+      "id": "defib-general",
+      "title": "DEFIB GENERAL",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Basic Auto Energy Escalation",
+          "YES/NO",
+          ""
+        ],
+        [
+          "Sync After Cardioversion",
+          "YES/NO",
+          ""
+        ],
+        [
+          "Disarm Timeout",
+          "60 SECONDS/120 SECONDS",
+          ""
+        ]
+      ]
+    },
+    {
+      "id": "defib-adult",
+      "title": "DEFIB PATIENT DEPENDENT - ADULT",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Shock Energy 1",
+          "1-10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200",
+          ""
+        ],
+        [
+          "Shock Energy 2",
+          "1-10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200",
+          ""
+        ],
+        [
+          "Shock Energy 3",
+          "1-10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200",
+          ""
+        ]
+      ]
+    },
+    {
+      "id": "defib-pediatric",
+      "title": "DEFIB PATIENT DEPENDENT - PEDIATRIC",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Shock Energy 1",
+          "1-10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200",
+          ""
+        ],
+        [
+          "Shock Energy 2",
+          "1-10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200",
+          ""
+        ],
+        [
+          "Shock Energy 3",
+          "1-10, 15, 20, 30, 50, 70, 85, 100, 120, 150, 200",
+          ""
+        ]
+      ]
+    },
+    {
+      "id": "defib-neonate",
+      "title": "DEFIB PATIENT DEPENDENT - NEONATE",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Shock Energy 1",
+          "1,2,3,4,5,6,7,8,9,10,15,20,30,50,70,85,100,120,150,200",
+          ""
+        ],
+        [
+          "Shock Energy 2",
+          "1,2,3,4,5,6,7,8,9,10,15,20,30,50,70,85,100,120,150,200",
+          ""
+        ],
+        [
+          "Shock Energy 3",
+          "1,2,3,4,5,6,7,8,9,10,15,20,30,50,70,85,100,120,150,200",
+          ""
+        ]
+      ]
+    },
+    {
+      "id": "readiness-test",
+      "title": "READINESS TEST",
+      "headers": [
+        "Configuration Item",
+        "Default Value",
+        "Recommended"
+      ],
+      "rows": [
+        [
+          "Automatic Readiness Test",
+          "OFF/ONCE A DAY",
+          ""
+        ],
+        [
+          "Readiness Test Time",
+          "0000 HOURS",
+          ""
+        ],
+        [
+          "Self Test Enable Pads",
+          "YES/NO",
+          ""
+        ],
+        [
+          "Print Readiness Test Results",
+          "ON/OFF/ONLY IF FAIL",
+          ""
+        ]
+      ]
+    }
+  ]
+}

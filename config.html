@@ -117,6 +117,12 @@
           case "nicu":
             data = nicuData;
             break;
+          case "zenix-general":
+            data = zenixGeneralData;
+            break;
+          case "zenix-procedural":
+            data = zenixProceduralData;
+            break;
           default:
             data = onestepData;
         }
@@ -142,9 +148,9 @@
             <table aria-labelledby="${section.id}">
               <tr>
                 ${section.headers
-                  .map((header) =>
-                    header === "ZOLL Team Rec's"
-                      ? `<th scope="col" class="editable-header" contenteditable="true" aria-label="${header}">${header}</th>`
+                  .map((header, index) =>
+                    index === 2
+                      ? `<th scope="col" class="editable-header" data-original-header="${header}" contenteditable="true" aria-label="${header}">${header}</th>`
                       : `<th scope="col">${header}</th>`
                   )
                   .join("")}
