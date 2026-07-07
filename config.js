@@ -679,8 +679,6 @@ const zenixGeneralData = {
       title: "ALARMS",
       headers: ["Configuration Item", "Default Value", "Recommended"],
       rows: [
-        ["Power Up Mode", "AED/MANUAL", "AED"],
-        ["Default Patient Mode", "ADULT/PEDIATRIC/NEONATE", "ADULT"],
         ["Alarm Audio", "ON/OFF", "OFF"],
       ],
     },
