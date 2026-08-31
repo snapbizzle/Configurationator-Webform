@@ -796,8 +796,228 @@ const zenixProceduralData = JSON.parse(JSON.stringify(zenixGeneralData));
 zenixProceduralData.title = "ZOLL Zenix Config Tables - Procedural Config";
 
 // Global variables for modal
-let capturedCanvas = null;
+let capturedCanvas = null; // full-page canvas used by the PNG screenshot
+let capturedPages = []; // one canvas per US Letter page used by the PDF export
 let exportType = "pdf"; // "png" or "pdf"
+
+/* ---------------------------------------------------------------------------
+ * Paginated layout
+ *
+ * Both the PDF export and browser printing render an off-screen stack of
+ * fixed-size pages instead of one continuous strip. Dimensions are CSS pixels
+ * at 96dpi and mirror the values in styles.css:
+ *
+ *   US Letter 8.5in x 11in, 0.5in margins -> 7.5in x 10in of content
+ *   7.5in -> 720px, 10in -> 960px (page boxes are kept a little shorter so
+ *   rounding in the print engine can never spill one page onto two sheets).
+ * ------------------------------------------------------------------------- */
+const PRINT_LAYOUT = {
+  pageWidthPx: 720,
+  pageHeightPx: 950,
+  footerHeightPx: 34, // strip reserved at the bottom of every page
+  blockGapPx: 22, // gap between two blocks on the same page
+  captureScale: 2, // html2canvas oversampling (~192 dpi in the PDF)
+  sheetWidthMm: 215.9, // US Letter, portrait
+  marginMm: 12.7, // 0.5in
+};
+
+const PX_TO_MM = 25.4 / 96;
+
+// Vertical space available for content once the footer strip is reserved.
+function printableBodyHeight() {
+  return PRINT_LAYOUT.pageHeightPx - PRINT_LAYOUT.footerHeightPx;
+}
+
+// The blocks that pagination treats as indivisible: the title block and each
+// table section. A block is never broken across a page.
+function collectPrintBlocks() {
+  const blocks = [];
+
+  const header = document.querySelector(".page-header-block");
+  if (header) {
+    blocks.push(header);
+  }
+
+  document
+    .querySelectorAll("#content-container .table-section")
+    .forEach((section) => blocks.push(section));
+
+  return blocks;
+}
+
+// Clone a block for the print layout, dropping ids and editing affordances so
+// the copy cannot collide with the live page.
+function preparePrintBlock(source) {
+  const block = source.cloneNode(true);
+  block.classList.add("print-block");
+  block.removeAttribute("id");
+  block.removeAttribute("contenteditable");
+  block.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+  block
+    .querySelectorAll("[contenteditable]")
+    .forEach((el) => el.removeAttribute("contenteditable"));
+  return block;
+}
+
+function destroyPrintLayout() {
+  const existing = document.getElementById("print-root");
+  if (existing && existing.parentNode) {
+    existing.parentNode.removeChild(existing);
+  }
+}
+
+/**
+ * Build the off-screen page stack.
+ *
+ * Blocks are placed in document order and packed onto the current page until
+ * the next one no longer fits, at which point a new page is started. That keeps
+ * every table whole while still filling each sheet, so pages do not end up
+ * mostly blank. Returns the array of page elements.
+ */
+function buildPrintLayout() {
+  destroyPrintLayout();
+
+  const root = document.createElement("div");
+  root.id = "print-root";
+  root.className = "print-root";
+  document.body.appendChild(root);
+
+  const maxBodyHeight = printableBodyHeight();
+  const pages = [];
+  let pageBody = null;
+  let usedHeight = 0;
+
+  function startPage() {
+    const page = document.createElement("div");
+    page.className = "print-page";
+
+    pageBody = document.createElement("div");
+    pageBody.className = "print-page-body";
+    page.appendChild(pageBody);
+
+    root.appendChild(page);
+    pages.push(page);
+    usedHeight = 0;
+  }
+
+  startPage();
+
+  collectPrintBlocks().forEach((source) => {
+    const block = preparePrintBlock(source);
+
+    // Measure inside the page so the block is laid out at print width.
+    pageBody.appendChild(block);
+    let blockHeight = block.offsetHeight;
+
+    // A block taller than a whole page is scaled down rather than split.
+    if (blockHeight > maxBodyHeight) {
+      const scale = maxBodyHeight / blockHeight;
+      block.style.transformOrigin = "top center";
+      block.style.transform = "scale(" + scale + ")";
+      block.style.height = maxBodyHeight + "px";
+      blockHeight = maxBodyHeight;
+    }
+
+    const gap = usedHeight > 0 ? PRINT_LAYOUT.blockGapPx : 0;
+    if (usedHeight > 0 && usedHeight + gap + blockHeight > maxBodyHeight) {
+      startPage();
+      pageBody.appendChild(block);
+      usedHeight = blockHeight;
+    } else {
+      usedHeight += gap + blockHeight;
+    }
+  });
+
+  // Footers can only be numbered once the total page count is known.
+  pages.forEach((page, index) => {
+    const footer = document.createElement("div");
+    footer.className = "print-page-footer";
+    footer.textContent = "Page " + (index + 1) + " of " + pages.length;
+    page.appendChild(footer);
+  });
+
+  return pages;
+}
+
+// Rasterize each page, one at a time, into its own canvas. The footer is left
+// out of the image because the PDF draws it as real (selectable) text.
+function capturePrintPages(pages) {
+  return pages.reduce(
+    (chain, page) =>
+      chain.then((canvases) =>
+        html2canvas(page, {
+          scale: PRINT_LAYOUT.captureScale,
+          backgroundColor: "#ffffff",
+          width: PRINT_LAYOUT.pageWidthPx,
+          height: PRINT_LAYOUT.pageHeightPx,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          ignoreElements: (element) =>
+            Boolean(
+              element.classList &&
+              element.classList.contains("print-page-footer")
+            ),
+        }).then((canvas) => canvases.concat(canvas))
+      ),
+    Promise.resolve([])
+  );
+}
+
+// Stack the page canvases into a single image so the modal previews the real
+// pagination, footers included. Drawn at preview resolution rather than capture
+// resolution so the data URL stays small even for a long report.
+function buildPagesPreview(canvases) {
+  const gap = 16;
+  const scale = Math.min(1, 600 / canvases[0].width);
+  const width = Math.round(canvases[0].width * scale);
+  const pageHeight = Math.round(canvases[0].height * scale);
+
+  const preview = document.createElement("canvas");
+  preview.width = width + gap * 2;
+  preview.height = pageHeight * canvases.length + gap * (canvases.length + 1);
+
+  const ctx = preview.getContext("2d");
+  ctx.fillStyle = "#e9ecef";
+  ctx.fillRect(0, 0, preview.width, preview.height);
+
+  const footerRatio = PRINT_LAYOUT.footerHeightPx / PRINT_LAYOUT.pageHeightPx;
+  let top = gap;
+
+  canvases.forEach((canvas, index) => {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(gap, top, width, pageHeight);
+    ctx.drawImage(canvas, gap, top, width, pageHeight);
+
+    // Redraw the footer that was left out of the capture.
+    const footerTop = top + pageHeight * (1 - footerRatio);
+    ctx.strokeStyle = "#dddddd";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(gap, footerTop);
+    ctx.lineTo(gap + width, footerTop);
+    ctx.stroke();
+
+    ctx.fillStyle = "#666666";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font =
+      Math.max(7, Math.round(pageHeight * (12 / PRINT_LAYOUT.pageHeightPx))) +
+      "px Arial, sans-serif";
+    ctx.fillText(
+      "Page " + (index + 1) + " of " + canvases.length,
+      gap + width / 2,
+      footerTop + (pageHeight * footerRatio) / 2
+    );
+
+    ctx.strokeStyle = "#c8c8c8";
+    ctx.strokeRect(gap + 0.5, top + 0.5, width - 1, pageHeight - 1);
+
+    top += pageHeight + gap;
+  });
+
+  return preview;
+}
 
 // Function to generate filename from subtitle and H1
 function generateFilename(type = "pdf") {
@@ -844,14 +1064,27 @@ function generateFilename(type = "pdf") {
 }
 
 // Modal functions
-function showModal(canvas, type = "pdf") {
-  capturedCanvas = canvas;
+// `capture` is a single canvas for a PNG screenshot, or the array of page
+// canvases produced by the paginated PDF export.
+function showModal(capture, type = "pdf") {
   exportType = type;
+
+  let previewCanvas;
+  if (type === "png") {
+    capturedCanvas = capture;
+    capturedPages = [];
+    previewCanvas = capture;
+  } else {
+    capturedCanvas = null;
+    capturedPages = capture;
+    previewCanvas = buildPagesPreview(capture);
+  }
 
   const modal = document.getElementById("pdfModal");
   const modalHeader = document.querySelector(".modal-header h3");
   const filenameInput = document.getElementById("filenameInput");
   const previewImage = document.getElementById("previewImage");
+  const previewLabel = document.querySelector(".preview-section p");
   const saveBtn = document.getElementById("saveBtn");
 
   // Update modal title and button text based on type
@@ -863,11 +1096,22 @@ function showModal(canvas, type = "pdf") {
     saveBtn.textContent = "Save PDF";
   }
 
+  if (previewLabel) {
+    previewLabel.textContent =
+      type === "png"
+        ? "Preview of captured configuration:"
+        : "Preview of captured configuration - " +
+          capturedPages.length +
+          " US Letter page" +
+          (capturedPages.length === 1 ? "" : "s") +
+          ":";
+  }
+
   // Set filename
   filenameInput.value = generateFilename(type);
 
   // Set preview image
-  previewImage.src = canvas.toDataURL();
+  previewImage.src = previewCanvas.toDataURL();
 
   // Show modal
   modal.style.display = "block";
@@ -880,11 +1124,12 @@ function hideModal() {
   const modal = document.getElementById("pdfModal");
   modal.style.display = "none";
   capturedCanvas = null;
+  capturedPages = [];
   exportType = "pdf";
 }
 
 function saveFile() {
-  if (!capturedCanvas) return;
+  if (!capturedCanvas && capturedPages.length === 0) return;
 
   const filenameInput = document.getElementById("filenameInput");
   let filename = filenameInput.value.trim();
@@ -928,24 +1173,52 @@ function saveFile() {
     }
 
     try {
-      // Calculate custom dimensions for single long page
-      const customWidth = 210; // A4 width in mm
-      const customHeight =
-        (capturedCanvas.height / capturedCanvas.width) * customWidth;
-
-      // Create PDF with custom dimensions for single long page
+      // One US Letter page per captured page canvas.
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: [customWidth, customHeight], // Custom format for single long page
+        format: "letter",
       });
 
-      // Add entire canvas to single long page (no page breaks)
-      const imgData = capturedCanvas.toDataURL("image/jpeg", 0.95);
-      pdf.addImage(imgData, "JPEG", 0, 0, customWidth, customHeight);
+      const margin = PRINT_LAYOUT.marginMm;
+      const imageWidth = PRINT_LAYOUT.pageWidthPx * PX_TO_MM;
+      const imageHeight = PRINT_LAYOUT.pageHeightPx * PX_TO_MM;
+      const footerLineY =
+        margin +
+        (PRINT_LAYOUT.pageHeightPx - PRINT_LAYOUT.footerHeightPx) * PX_TO_MM;
+      const totalPages = capturedPages.length;
 
-      // Download single long PDF page
+      capturedPages.forEach((canvas, index) => {
+        if (index > 0) {
+          pdf.addPage("letter", "portrait");
+        }
+
+        pdf.addImage(
+          canvas.toDataURL("image/jpeg", 0.95),
+          "JPEG",
+          margin,
+          margin,
+          imageWidth,
+          imageHeight
+        );
+
+        // "Page X of Y" footer, drawn as text so it stays crisp and selectable.
+        pdf.setDrawColor(221);
+        pdf.setLineWidth(0.2);
+        pdf.line(margin, footerLineY, margin + imageWidth, footerLineY);
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.setTextColor(102);
+        pdf.text(
+          "Page " + (index + 1) + " of " + totalPages,
+          PRINT_LAYOUT.sheetWidthMm / 2,
+          footerLineY + 6,
+          { align: "center" }
+        );
+      });
+
       pdf.save(filename);
 
       hideModal();
@@ -1017,30 +1290,81 @@ function takeScreenshot() {
 }
 
 // PDF Export functionality
+// The report is laid out off-screen as US Letter pages first, so the export
+// never has to hide the on-screen chrome and never splits a table.
 function exportAsPDF() {
-  // Hide all buttons except ZOLL button for PDF export
-  const buttonsToHide = document.querySelectorAll(
-    ".back-home-btn, .reset-tables-btn, .screenshot-btn, .export-pdf-btn"
-  );
-  buttonsToHide.forEach((btn) => (btn.style.display = "none"));
+  const exportBtn = document.querySelector(".export-pdf-btn");
+  const originalLabel = exportBtn ? exportBtn.innerHTML : null;
 
-  html2canvas(document.body, {
-    height: document.body.scrollHeight,
-    width: document.body.scrollWidth,
-    scrollX: 0,
-    scrollY: 0,
-    useCORS: true,
-    allowTaint: true,
-  })
-    .then(function (canvas) {
-      buttonsToHide.forEach((btn) => (btn.style.display = "inline-block"));
-      showModal(canvas, "pdf");
+  if (exportBtn) {
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = "Building<br />PDF...";
+  }
+
+  function cleanup() {
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = originalLabel;
+    }
+    destroyPrintLayout();
+  }
+
+  let pages;
+  try {
+    pages = buildPrintLayout();
+  } catch (error) {
+    console.error("Print layout failed:", error);
+    cleanup();
+    alert("Failed to lay out the PDF. Please try again.");
+    return;
+  }
+
+  capturePrintPages(pages)
+    .then(function (canvases) {
+      cleanup();
+      showModal(canvases, "pdf");
     })
     .catch(function (error) {
-      console.error("Screenshot failed:", error);
-      buttonsToHide.forEach((btn) => (btn.style.display = "inline-block"));
-      alert("Failed to capture screenshot. Please try again.");
+      console.error("PDF capture failed:", error);
+      cleanup();
+      alert("Failed to capture configuration. Please try again.");
     });
+}
+
+// Browser printing (Ctrl/Cmd+P) uses the same paginated layout, with a CSS
+// footer on each page instead of the one jsPDF draws.
+function setupPrintHandlers() {
+  function preparePrint() {
+    if (!document.getElementById("content-container")) return;
+    buildPrintLayout();
+    document.body.classList.add("paginated-print");
+  }
+
+  function finishPrint() {
+    document.body.classList.remove("paginated-print");
+    destroyPrintLayout();
+  }
+
+  window.addEventListener("beforeprint", preparePrint);
+  window.addEventListener("afterprint", finishPrint);
+
+  // Safari and older WebKit only report print state through matchMedia.
+  if (window.matchMedia) {
+    const printQuery = window.matchMedia("print");
+    const onPrintChange = function (event) {
+      if (event.matches) {
+        preparePrint();
+      } else {
+        finishPrint();
+      }
+    };
+
+    if (printQuery.addEventListener) {
+      printQuery.addEventListener("change", onPrintChange);
+    } else if (printQuery.addListener) {
+      printQuery.addListener(onPrintChange);
+    }
+  }
 }
 
 // Back home functionality
@@ -1104,6 +1428,10 @@ function setupEditableCells() {
 
 // Initialize the page
 function initConfigPage() {
+  // Print hooks are registered immediately so Ctrl/Cmd+P is paginated even if
+  // the user prints before the DOM has finished loading.
+  setupPrintHandlers();
+
   // Run on page load
   document.addEventListener("DOMContentLoaded", function () {
     highlightDiffRows();

@@ -51,6 +51,11 @@ body {
   padding-top: 100px; /* Increased to prevent content overlap with fixed buttons */
 }
 
+.page-header-block {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
 .logo {
   max-width: 200px;
   width: 100%;
@@ -204,6 +209,12 @@ tr:hover {
   background-color: #054a9a;
 }
 
+.manual-button:disabled,
+.manual-button:disabled:hover {
+  background-color: #7fa8d8;
+  cursor: progress;
+}
+
 .modal {
   display: none;
   position: fixed;
@@ -305,6 +316,123 @@ tr:hover {
   background-color: #054a9a;
 }
 
+/* ---------------------------------------------------------------------------
+   Paginated layout (shared by the PDF export and by browser printing)
+
+   The layout is built off-screen as a stack of fixed-size "pages" that match a
+   US Letter sheet at 96dpi:
+
+     8.5in x 11in sheet - 0.5in margins  =  7.5in x 10in of content
+     7.5in x 96dpi = 720px      10in x 96dpi = 960px
+
+   Page boxes are kept slightly shorter than 960px so rounding in the browser's
+   print engine can never spill a page onto a second sheet. Whole blocks (the
+   title block and each table section) are packed onto a page in document
+   order, and a block that does not fit is moved to the next page, so a table is
+   never split across a page break.
+--------------------------------------------------------------------------- */
+
+@page {
+  size: letter portrait;
+  margin: 0.5in;
+}
+
+.print-root {
+  position: absolute;
+  top: 0;
+  left: -20000px;
+  width: 720px;
+  background-color: #ffffff;
+  color: #333;
+}
+
+.print-page {
+  position: relative;
+  box-sizing: border-box;
+  width: 720px;
+  height: 950px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.print-page-body {
+  box-sizing: border-box;
+  height: 916px; /* page height minus the footer strip */
+  overflow: hidden;
+}
+
+.print-page-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  line-height: 34px;
+  border-top: 1px solid #ddd;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.print-root .print-block {
+  margin: 0 0 22px 0;
+}
+
+.print-root .print-block:last-child {
+  margin-bottom: 0;
+}
+
+.print-root .page-header-block {
+  max-width: 100%;
+  text-align: center;
+}
+
+.print-root .logo {
+  max-width: 150px;
+  margin: 0 auto 10px;
+}
+
+.print-root h1 {
+  font-size: 22px;
+  margin: 0 0 6px;
+  padding-bottom: 0;
+}
+
+.print-root .sub-title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.print-root .table-section {
+  max-width: 100%;
+}
+
+.print-root h2 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+
+.print-root table {
+  max-width: 100%;
+  box-shadow: none;
+}
+
+.print-root th,
+.print-root td {
+  padding: 6px 8px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.print-root th {
+  font-size: 13px;
+}
+
+.print-root td {
+  font-size: 12px;
+}
+
 @media print {
   .logo,
   .button-row,
@@ -314,8 +442,7 @@ tr:hover {
   }
   .sub-title,
   h1,
-  h2,
-  table {
+  h2 {
     display: block;
   }
   body {
@@ -333,5 +460,54 @@ tr:hover {
   }
   h2 {
     margin-left: 0;
+  }
+
+  /* Fallback for browsers that never fired `beforeprint`: at least keep a
+     table (and its heading) from being broken across two sheets. */
+  .table-section,
+  table,
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  h2 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Paginated printing: only the pre-built page stack is printed. */
+  body.paginated-print {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+  }
+  body.paginated-print > *:not(.print-root) {
+    display: none !important;
+  }
+  body.paginated-print .print-root {
+    position: static;
+    left: auto;
+    top: auto;
+    width: 100%;
+  }
+  body.paginated-print .print-root .logo {
+    display: block;
+  }
+  body.paginated-print .print-root table {
+    display: table;
+  }
+  body.paginated-print .print-root .table-section,
+  body.paginated-print .print-root table,
+  body.paginated-print .print-root tr {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+  .print-page {
+    break-after: page;
+    page-break-after: always;
+  }
+  .print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 }
