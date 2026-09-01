@@ -1,6 +1,9 @@
 // Embedded configuration data
 const onestepData = {
   title: "ZOLL R Series Config MCU 20 - OneStep Config",
+  manualUrl:
+    "https://www.zoll.com/-/media/product-materials/product-manuals/r-series/01/9650-0902-01-sf_y.ashx?sc_lang=en-us",
+  manualLabel: "ZOLL R Series Configuration Guide",
   sections: [
     {
       id: "general-settings",
@@ -198,6 +201,9 @@ const onestepData = {
 
 const proceduralData = {
   title: "ZOLL R Series Config MCU 20 - Procedural Defibs Only!",
+  manualUrl:
+    "https://www.zoll.com/-/media/product-materials/product-manuals/r-series/01/9650-0902-01-sf_y.ashx?sc_lang=en-us",
+  manualLabel: "ZOLL R Series Configuration Guide",
   sections: [
     {
       id: "general-settings",
@@ -395,6 +401,9 @@ const proceduralData = {
 
 const nicuData = {
   title: "ZOLL R Series Config MCU 20 - NICU Defibs Only!",
+  manualUrl:
+    "https://www.zoll.com/-/media/product-materials/product-manuals/r-series/01/9650-0902-01-sf_y.ashx?sc_lang=en-us",
+  manualLabel: "ZOLL R Series Configuration Guide",
   sections: [
     {
       id: "general-settings",
@@ -799,6 +808,7 @@ zenixProceduralData.title = "ZOLL Zenix Config Tables - Procedural Config";
 let capturedCanvas = null; // full-page canvas used by the PNG screenshot
 let capturedPages = []; // one canvas per US Letter page used by the PDF export
 let exportType = "pdf"; // "png" or "pdf"
+let currentConfigData = null; // active dataset - set by renderConfigPage() in config.html
 
 /* ---------------------------------------------------------------------------
  * Paginated layout
@@ -970,10 +980,33 @@ function buildPrintLayout() {
   });
 
   // Footers can only be numbered once the total page count is known.
+  const manualUrl = currentConfigData && currentConfigData.manualUrl;
+  const manualLabel =
+    (currentConfigData && currentConfigData.manualLabel) ||
+    "Configuration Manual";
+
   pages.forEach((page, index) => {
     const footer = document.createElement("div");
     footer.className = "print-page-footer";
-    footer.textContent = "Page " + (index + 1) + " of " + pages.length;
+
+    footer.appendChild(
+      document.createTextNode("Page " + (index + 1) + " of " + pages.length)
+    );
+
+    // Repeat the reference manual link in every footer - drawn as real,
+    // selectable/clickable text (not part of the rasterized page image); see
+    // capturePrintPages() and the matching jsPDF footer in saveFile().
+    if (manualUrl) {
+      footer.appendChild(document.createTextNode("  •  "));
+      const link = document.createElement("a");
+      link.className = "print-page-footer-link";
+      link.href = manualUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = manualLabel;
+      footer.appendChild(link);
+    }
+
     page.appendChild(footer);
   });
 
@@ -1244,20 +1277,49 @@ function saveFile() {
           imageHeight
         );
 
-        // "Page X of Y" footer, drawn as text so it stays crisp and selectable.
+        // "Page X of Y" footer, drawn as text so it stays crisp and
+        // selectable - and, when this config has one, a real clickable link
+        // to its reference manual right next to it.
         pdf.setDrawColor(221);
         pdf.setLineWidth(0.2);
         pdf.line(margin, footerLineY, margin + imageWidth, footerLineY);
 
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(10);
-        pdf.setTextColor(102);
-        pdf.text(
-          "Page " + (index + 1) + " of " + totalPages,
-          PRINT_LAYOUT.sheetWidthMm / 2,
-          footerLineY + 6,
-          { align: "center" }
-        );
+
+        const pageLabel = "Page " + (index + 1) + " of " + totalPages;
+        const manualUrl = currentConfigData && currentConfigData.manualUrl;
+        const footerTextY = footerLineY + 6;
+
+        if (manualUrl) {
+          const manualLabel =
+            currentConfigData.manualLabel || "Configuration Manual";
+          const separator = "   •   ";
+          const pageLabelWidth = pdf.getTextWidth(pageLabel);
+          const separatorWidth = pdf.getTextWidth(separator);
+          const manualWidth = pdf.getTextWidth(manualLabel);
+          let x =
+            PRINT_LAYOUT.sheetWidthMm / 2 -
+            (pageLabelWidth + separatorWidth + manualWidth) / 2;
+
+          pdf.setTextColor(102);
+          pdf.text(pageLabel, x, footerTextY);
+          x += pageLabelWidth;
+
+          pdf.text(separator, x, footerTextY);
+          x += separatorWidth;
+
+          pdf.setTextColor(7, 101, 205);
+          pdf.textWithLink(manualLabel, x, footerTextY, { url: manualUrl });
+          pdf.setDrawColor(7, 101, 205);
+          pdf.setLineWidth(0.15);
+          pdf.line(x, footerTextY + 0.8, x + manualWidth, footerTextY + 0.8);
+        } else {
+          pdf.setTextColor(102);
+          pdf.text(pageLabel, PRINT_LAYOUT.sheetWidthMm / 2, footerTextY, {
+            align: "center",
+          });
+        }
       });
 
       pdf.save(filename);
