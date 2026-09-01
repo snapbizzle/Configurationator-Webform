@@ -814,6 +814,7 @@ let exportType = "pdf"; // "png" or "pdf"
 const PRINT_LAYOUT = {
   pageWidthPx: 720,
   pageHeightPx: 950,
+  headerHeightPx: 70, // running header repeated at the top of every page
   footerHeightPx: 34, // strip reserved at the bottom of every page
   blockGapPx: 22, // gap between two blocks on the same page
   captureScale: 2, // html2canvas oversampling (~192 dpi in the PDF)
@@ -823,26 +824,60 @@ const PRINT_LAYOUT = {
 
 const PX_TO_MM = 25.4 / 96;
 
-// Vertical space available for content once the footer strip is reserved.
+// Vertical space available for content once the running header and footer
+// strips are reserved.
 function printableBodyHeight() {
-  return PRINT_LAYOUT.pageHeightPx - PRINT_LAYOUT.footerHeightPx;
+  return (
+    PRINT_LAYOUT.pageHeightPx -
+    PRINT_LAYOUT.headerHeightPx -
+    PRINT_LAYOUT.footerHeightPx
+  );
 }
 
-// The blocks that pagination treats as indivisible: the title block and each
-// table section. A block is never broken across a page.
+// The blocks that pagination treats as indivisible: each table section. A
+// block is never broken across a page. (The title block is not included here
+// - every printed page gets its own compact running header instead; see
+// buildPageHeader().)
 function collectPrintBlocks() {
   const blocks = [];
-
-  const header = document.querySelector(".page-header-block");
-  if (header) {
-    blocks.push(header);
-  }
 
   document
     .querySelectorAll("#content-container .table-section")
     .forEach((section) => blocks.push(section));
 
   return blocks;
+}
+
+// Build the running header repeated at the top of every printed page: the
+// logo plus the document title and hospital name, so a reader can tell which
+// report page 5 belongs to without paging back to page 1.
+function buildPageHeader(titleText, subtitleText) {
+  const header = document.createElement("div");
+  header.className = "print-page-header";
+
+  const logo = document.createElement("img");
+  logo.className = "print-page-header-logo";
+  logo.src = "logo-ce.png";
+  logo.alt = "ZOLL Clinical Education";
+  header.appendChild(logo);
+
+  const textWrap = document.createElement("div");
+  textWrap.className = "print-page-header-text";
+
+  const titleEl = document.createElement("div");
+  titleEl.className = "print-page-header-title";
+  titleEl.textContent = titleText;
+  textWrap.appendChild(titleEl);
+
+  if (subtitleText) {
+    const subtitleEl = document.createElement("div");
+    subtitleEl.className = "print-page-header-subtitle";
+    subtitleEl.textContent = subtitleText;
+    textWrap.appendChild(subtitleEl);
+  }
+
+  header.appendChild(textWrap);
+  return header;
 }
 
 // Clone a block for the print layout, dropping ids and editing affordances so
@@ -882,6 +917,11 @@ function buildPrintLayout() {
   root.className = "print-root";
   document.body.appendChild(root);
 
+  const titleEl = document.getElementById("page-title");
+  const subtitleEl = document.querySelector(".sub-title");
+  const titleText = titleEl ? titleEl.textContent.trim() : "";
+  const subtitleText = subtitleEl ? subtitleEl.textContent.trim() : "";
+
   const maxBodyHeight = printableBodyHeight();
   const pages = [];
   let pageBody = null;
@@ -890,6 +930,7 @@ function buildPrintLayout() {
   function startPage() {
     const page = document.createElement("div");
     page.className = "print-page";
+    page.appendChild(buildPageHeader(titleText, subtitleText));
 
     pageBody = document.createElement("div");
     pageBody.className = "print-page-body";

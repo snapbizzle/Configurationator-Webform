@@ -52,31 +52,39 @@ body {
 }
 
 .page-header-block {
+  display: flex;
+  align-items: center;
+  gap: 30px;
   max-width: 1100px;
-  margin: 0 auto;
+  margin: 0 auto 40px;
 }
 
 .logo {
-  max-width: 200px;
+  max-width: 160px;
   width: 100%;
-  margin: 30px auto 40px;
+  flex-shrink: 0;
   display: block;
   background: transparent;
 }
 
+.page-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
 h1 {
   color: #333;
-  text-align: center;
-  padding-bottom: 20px;
+  text-align: left;
+  margin: 0 0 6px;
+  padding-bottom: 0;
 }
 
 .sub-title {
   display: block;
-  text-align: center;
-  font-size: 32px;
+  text-align: left;
+  font-size: 28px;
   color: #666;
-  margin-top: -10px;
-  margin-bottom: 40px;
+  margin: 0;
 }
 
 .table-section {
@@ -355,9 +363,52 @@ tr:hover {
   background-color: #ffffff;
 }
 
+/* Running header repeated at the top of every printed page, so a reader can
+   tell which report a page belongs to without turning back to page 1. */
+.print-page-header {
+  box-sizing: border-box;
+  height: 70px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1.5px solid #0765cd;
+}
+
+.print-page-header-logo {
+  height: 44px;
+  width: auto;
+  flex-shrink: 0;
+  display: block;
+  background: transparent;
+}
+
+.print-page-header-text {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.print-page-header-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.print-page-header-subtitle {
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .print-page-body {
   box-sizing: border-box;
-  height: 916px; /* page height minus the footer strip */
+  height: 846px; /* page height minus the running header and the footer strip */
   overflow: hidden;
 }
 
@@ -380,27 +431,6 @@ tr:hover {
 
 .print-root .print-block:last-child {
   margin-bottom: 0;
-}
-
-.print-root .page-header-block {
-  max-width: 100%;
-  text-align: center;
-}
-
-.print-root .logo {
-  max-width: 150px;
-  margin: 0 auto 10px;
-}
-
-.print-root h1 {
-  font-size: 22px;
-  margin: 0 0 6px;
-  padding-bottom: 0;
-}
-
-.print-root .sub-title {
-  font-size: 18px;
-  margin: 0;
 }
 
 .print-root .table-section {
