@@ -50,6 +50,16 @@
         <button class="manual-button reset-tables-btn">
           Reset<br />Tables
         </button>
+        <a
+          id="manualLinkBtn"
+          class="manual-button manual-link-btn"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display: none"
+        >
+          View<br />Manual
+        </a>
       </div>
       <div class="button-container-right">
         <button class="manual-button screenshot-btn">
@@ -136,11 +146,27 @@
       }
 
       function renderConfigPage(data) {
+        // Remember the active dataset so the PDF export can pull its
+        // reference manual link/label too (see config.js).
+        currentConfigData = data;
+
         // Set page title
         document.getElementById("page-title").textContent = data.title;
 
         // Update breadcrumb with current page title
         document.getElementById("breadcrumb-current").textContent = data.title;
+
+        // Show a "View Manual" link when this config has a reference manual.
+        const manualBtn = document.getElementById("manualLinkBtn");
+        if (manualBtn) {
+          if (data.manualUrl) {
+            manualBtn.href = data.manualUrl;
+            manualBtn.title = data.manualLabel || "Configuration Manual";
+            manualBtn.style.display = "";
+          } else {
+            manualBtn.style.display = "none";
+          }
+        }
 
         // Generate HTML for all sections
         const container = document.getElementById("content-container");
