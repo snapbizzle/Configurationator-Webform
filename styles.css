@@ -197,9 +197,15 @@ tr:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 24px;
+  box-sizing: border-box; /* buttons default to this, but <a> doesn't - pin
+    it explicitly so the "View Manual" link sizes identically to its
+    <button> siblings */
+  width: 168px; /* uniform size for every button/link in the row, wide
+    enough to fit the longest label ("Take Screenshot!") without wrapping */
+  padding: 12px 12px;
   font-size: 18px;
   font-weight: bold;
+  line-height: 1.25;
   color: white;
   background-color: #0765cd;
   border: none;
@@ -207,10 +213,8 @@ tr:hover {
   cursor: pointer;
   text-decoration: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  min-width: 120px;
   min-height: 44px;
   text-align: center;
-  margin: 5px;
 }
 
 .manual-button:hover {
@@ -221,6 +225,65 @@ tr:hover {
 .manual-button:disabled:hover {
   background-color: #7fa8d8;
   cursor: progress;
+}
+
+/* Below this width the five buttons (168px each) no longer fit the fixed
+   top bar in one row, so it drops out of position:fixed into normal flow -
+   letting it wrap onto a second row without overlapping the page - and the
+   buttons shrink to a size that still fits three per row without wrapping
+   their own text. */
+@media (max-width: 768px) {
+  .button-row {
+    position: static;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .button-container-left,
+  .button-container-right {
+    flex: 1 1 auto;
+    justify-content: center;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .manual-button {
+    width: 106px;
+    font-size: 13px;
+    padding: 8px 6px;
+    min-height: 38px;
+  }
+
+  .container {
+    padding-top: 20px;
+  }
+
+  /* The logo-left/title-right row only has room to breathe on wide
+     screens; below this width there isn't enough space beside a legible
+     logo for the title to sit without wrapping into a cramped column, so
+     stack them instead. */
+  .page-header-block {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .logo {
+    max-width: 130px;
+  }
+
+  h1 {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .sub-title {
+    font-size: 20px;
+    text-align: center;
+  }
 }
 
 .modal {
