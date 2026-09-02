@@ -805,9 +805,7 @@ const zenixProceduralData = JSON.parse(JSON.stringify(zenixGeneralData));
 zenixProceduralData.title = "ZOLL Zenix Config Tables - Procedural Config";
 
 // Global variables for modal
-let capturedCanvas = null; // full-page canvas used by the PNG screenshot
 let capturedPages = []; // one canvas per US Letter page used by the PDF export
-let exportType = "pdf"; // "png" or "pdf"
 let currentConfigData = null; // active dataset - set by renderConfigPage() in config.html
 
 /* ---------------------------------------------------------------------------
@@ -1094,7 +1092,7 @@ function buildPagesPreview(canvases) {
 }
 
 // Function to generate filename from subtitle and H1
-function generateFilename(type = "pdf") {
+function generateFilename() {
   const subtitleElement = document.querySelector(".sub-title");
   const h1Element = document.querySelector("h1");
 
@@ -1134,25 +1132,15 @@ function generateFilename(type = "pdf") {
   }
 
   // Add appropriate extension
-  return type === "png" ? `${baseFilename}.png` : `${baseFilename}.pdf`;
+  return `${baseFilename}.pdf`;
 }
 
 // Modal functions
-// `capture` is a single canvas for a PNG screenshot, or the array of page
-// canvases produced by the paginated PDF export.
-function showModal(capture, type = "pdf") {
-  exportType = type;
-
-  let previewCanvas;
-  if (type === "png") {
-    capturedCanvas = capture;
-    capturedPages = [];
-    previewCanvas = capture;
-  } else {
-    capturedCanvas = null;
-    capturedPages = capture;
-    previewCanvas = buildPagesPreview(capture);
-  }
+// `pages` is the array of page canvases produced by the paginated PDF
+// export.
+function showModal(pages) {
+  capturedPages = pages;
+  const previewCanvas = buildPagesPreview(pages);
 
   const modal = document.getElementById("pdfModal");
   const modalHeader = document.querySelector(".modal-header h3");
@@ -1161,28 +1149,20 @@ function showModal(capture, type = "pdf") {
   const previewLabel = document.querySelector(".preview-section p");
   const saveBtn = document.getElementById("saveBtn");
 
-  // Update modal title and button text based on type
-  if (type === "png") {
-    modalHeader.textContent = "Save Screenshot";
-    saveBtn.textContent = "Save PNG";
-  } else {
-    modalHeader.textContent = "Save Configuration Report";
-    saveBtn.textContent = "Save PDF";
-  }
+  modalHeader.textContent = "Save Configuration Report";
+  saveBtn.textContent = "Save PDF";
 
   if (previewLabel) {
     previewLabel.textContent =
-      type === "png"
-        ? "Preview of captured configuration:"
-        : "Preview of captured configuration - " +
-          capturedPages.length +
-          " US Letter page" +
-          (capturedPages.length === 1 ? "" : "s") +
-          ":";
+      "Preview of captured configuration - " +
+      capturedPages.length +
+      " US Letter page" +
+      (capturedPages.length === 1 ? "" : "s") +
+      ":";
   }
 
   // Set filename
-  filenameInput.value = generateFilename(type);
+  filenameInput.value = generateFilename();
 
   // Set preview image
   previewImage.src = previewCanvas.toDataURL();
@@ -1197,138 +1177,111 @@ function showModal(capture, type = "pdf") {
 function hideModal() {
   const modal = document.getElementById("pdfModal");
   modal.style.display = "none";
-  capturedCanvas = null;
   capturedPages = [];
-  exportType = "pdf";
 }
 
 function saveFile() {
-  if (!capturedCanvas && capturedPages.length === 0) return;
+  if (capturedPages.length === 0) return;
 
   const filenameInput = document.getElementById("filenameInput");
   let filename = filenameInput.value.trim();
 
-  if (exportType === "png") {
-    // Ensure .png extension
-    if (!filename.toLowerCase().endsWith(".png")) {
-      filename += ".png";
-    }
+  // Ensure .pdf extension
+  if (!filename.toLowerCase().endsWith(".pdf")) {
+    filename += ".pdf";
+  }
 
-    // Sanitize filename
-    filename = filename
-      .replace(/[^a-zA-Z0-9\s\-_\.]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!filename || filename === ".png") {
-      filename = "Config Report.png";
-    }
+  // Sanitize filename
+  filename = filename
+    .replace(/[^a-zA-Z0-9\s\-_\.]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!filename || filename === ".pdf") {
+    filename = "Config Report.pdf";
+  }
 
-    // Download PNG
-    const link = document.createElement("a");
-    link.download = filename;
-    link.href = capturedCanvas.toDataURL();
-    link.click();
+  try {
+    // One US Letter page per captured page canvas.
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "letter",
+    });
+
+    const margin = PRINT_LAYOUT.marginMm;
+    const imageWidth = PRINT_LAYOUT.pageWidthPx * PX_TO_MM;
+    const imageHeight = PRINT_LAYOUT.pageHeightPx * PX_TO_MM;
+    const footerLineY =
+      margin +
+      (PRINT_LAYOUT.pageHeightPx - PRINT_LAYOUT.footerHeightPx) * PX_TO_MM;
+    const totalPages = capturedPages.length;
+
+    capturedPages.forEach((canvas, index) => {
+      if (index > 0) {
+        pdf.addPage("letter", "portrait");
+      }
+
+      pdf.addImage(
+        canvas.toDataURL("image/jpeg", 0.95),
+        "JPEG",
+        margin,
+        margin,
+        imageWidth,
+        imageHeight
+      );
+
+      // "Page X of Y" footer, drawn as text so it stays crisp and
+      // selectable - and, when this config has one, a real clickable link
+      // to its reference manual right next to it.
+      pdf.setDrawColor(221);
+      pdf.setLineWidth(0.2);
+      pdf.line(margin, footerLineY, margin + imageWidth, footerLineY);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+
+      const pageLabel = "Page " + (index + 1) + " of " + totalPages;
+      const manualUrl = currentConfigData && currentConfigData.manualUrl;
+      const footerTextY = footerLineY + 6;
+
+      if (manualUrl) {
+        const manualLabel =
+          currentConfigData.manualLabel || "Configuration Manual";
+        const separator = "   •   ";
+        const pageLabelWidth = pdf.getTextWidth(pageLabel);
+        const separatorWidth = pdf.getTextWidth(separator);
+        const manualWidth = pdf.getTextWidth(manualLabel);
+        let x =
+          PRINT_LAYOUT.sheetWidthMm / 2 -
+          (pageLabelWidth + separatorWidth + manualWidth) / 2;
+
+        pdf.setTextColor(102);
+        pdf.text(pageLabel, x, footerTextY);
+        x += pageLabelWidth;
+
+        pdf.text(separator, x, footerTextY);
+        x += separatorWidth;
+
+        pdf.setTextColor(7, 101, 205);
+        pdf.textWithLink(manualLabel, x, footerTextY, { url: manualUrl });
+        pdf.setDrawColor(7, 101, 205);
+        pdf.setLineWidth(0.15);
+        pdf.line(x, footerTextY + 0.8, x + manualWidth, footerTextY + 0.8);
+      } else {
+        pdf.setTextColor(102);
+        pdf.text(pageLabel, PRINT_LAYOUT.sheetWidthMm / 2, footerTextY, {
+          align: "center",
+        });
+      }
+    });
+
+    pdf.save(filename);
 
     hideModal();
-  } else {
-    // PDF export
-    // Ensure .pdf extension
-    if (!filename.toLowerCase().endsWith(".pdf")) {
-      filename += ".pdf";
-    }
-
-    // Sanitize filename
-    filename = filename
-      .replace(/[^a-zA-Z0-9\s\-_\.]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!filename || filename === ".pdf") {
-      filename = "Config Report.pdf";
-    }
-
-    try {
-      // One US Letter page per captured page canvas.
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "letter",
-      });
-
-      const margin = PRINT_LAYOUT.marginMm;
-      const imageWidth = PRINT_LAYOUT.pageWidthPx * PX_TO_MM;
-      const imageHeight = PRINT_LAYOUT.pageHeightPx * PX_TO_MM;
-      const footerLineY =
-        margin +
-        (PRINT_LAYOUT.pageHeightPx - PRINT_LAYOUT.footerHeightPx) * PX_TO_MM;
-      const totalPages = capturedPages.length;
-
-      capturedPages.forEach((canvas, index) => {
-        if (index > 0) {
-          pdf.addPage("letter", "portrait");
-        }
-
-        pdf.addImage(
-          canvas.toDataURL("image/jpeg", 0.95),
-          "JPEG",
-          margin,
-          margin,
-          imageWidth,
-          imageHeight
-        );
-
-        // "Page X of Y" footer, drawn as text so it stays crisp and
-        // selectable - and, when this config has one, a real clickable link
-        // to its reference manual right next to it.
-        pdf.setDrawColor(221);
-        pdf.setLineWidth(0.2);
-        pdf.line(margin, footerLineY, margin + imageWidth, footerLineY);
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(10);
-
-        const pageLabel = "Page " + (index + 1) + " of " + totalPages;
-        const manualUrl = currentConfigData && currentConfigData.manualUrl;
-        const footerTextY = footerLineY + 6;
-
-        if (manualUrl) {
-          const manualLabel =
-            currentConfigData.manualLabel || "Configuration Manual";
-          const separator = "   •   ";
-          const pageLabelWidth = pdf.getTextWidth(pageLabel);
-          const separatorWidth = pdf.getTextWidth(separator);
-          const manualWidth = pdf.getTextWidth(manualLabel);
-          let x =
-            PRINT_LAYOUT.sheetWidthMm / 2 -
-            (pageLabelWidth + separatorWidth + manualWidth) / 2;
-
-          pdf.setTextColor(102);
-          pdf.text(pageLabel, x, footerTextY);
-          x += pageLabelWidth;
-
-          pdf.text(separator, x, footerTextY);
-          x += separatorWidth;
-
-          pdf.setTextColor(7, 101, 205);
-          pdf.textWithLink(manualLabel, x, footerTextY, { url: manualUrl });
-          pdf.setDrawColor(7, 101, 205);
-          pdf.setLineWidth(0.15);
-          pdf.line(x, footerTextY + 0.8, x + manualWidth, footerTextY + 0.8);
-        } else {
-          pdf.setTextColor(102);
-          pdf.text(pageLabel, PRINT_LAYOUT.sheetWidthMm / 2, footerTextY, {
-            align: "center",
-          });
-        }
-      });
-
-      pdf.save(filename);
-
-      hideModal();
-    } catch (error) {
-      console.error("PDF generation failed:", error);
-      alert("Failed to generate PDF. Please try again.");
-    }
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+    alert("Failed to generate PDF. Please try again.");
   }
 }
 
@@ -1367,31 +1320,6 @@ function resetTables() {
   alert("All tables have been reset to default values.");
 }
 
-// PNG Screenshot functionality
-function takeScreenshot() {
-  // Hide all buttons including ZOLL button for screenshots
-  const buttons = document.querySelectorAll(".manual-button");
-  buttons.forEach((btn) => (btn.style.display = "none"));
-
-  html2canvas(document.body, {
-    height: document.body.scrollHeight,
-    width: document.body.scrollWidth,
-    scrollX: 0,
-    scrollY: 0,
-    useCORS: true,
-    allowTaint: true,
-  })
-    .then(function (canvas) {
-      buttons.forEach((btn) => (btn.style.display = "inline-block"));
-      showModal(canvas, "png");
-    })
-    .catch(function (error) {
-      console.error("Screenshot failed:", error);
-      buttons.forEach((btn) => (btn.style.display = "inline-block"));
-      alert("Failed to capture screenshot. Please try again.");
-    });
-}
-
 // PDF Export functionality
 // The report is laid out off-screen as US Letter pages first, so the export
 // never has to hide the on-screen chrome and never splits a table.
@@ -1425,7 +1353,7 @@ function exportAsPDF() {
   capturePrintPages(pages)
     .then(function (canvases) {
       cleanup();
-      showModal(canvases, "pdf");
+      showModal(canvases);
     })
     .catch(function (error) {
       console.error("PDF capture failed:", error);
@@ -1541,17 +1469,12 @@ function initConfigPage() {
     setupEditableCells();
 
     // Add event listeners
-    const screenshotBtn = document.querySelector(".screenshot-btn");
     const exportPdfBtn = document.querySelector(".export-pdf-btn");
     const resetTablesBtn = document.querySelector(".reset-tables-btn");
     const backHomeBtn = document.querySelector(".back-home-btn");
     const saveBtn = document.getElementById("saveBtn");
     const cancelBtn = document.getElementById("cancelBtn");
     const filenameInput = document.getElementById("filenameInput");
-
-    if (screenshotBtn) {
-      screenshotBtn.addEventListener("click", takeScreenshot);
-    }
 
     if (exportPdfBtn) {
       exportPdfBtn.addEventListener("click", exportAsPDF);
