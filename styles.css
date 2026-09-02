@@ -161,7 +161,8 @@ tr:hover {
     it explicitly so the "View Manual" link sizes identically to its
     <button> siblings */
   width: 168px; /* uniform size for every button/link in the row, wide
-    enough to fit the longest label ("Take Screenshot!") without wrapping */
+    enough to fit the longest label ("R Series Config Manual") without
+    wrapping */
   padding: 12px 12px;
   font-size: 18px;
   font-weight: bold;
@@ -187,7 +188,7 @@ tr:hover {
   cursor: progress;
 }
 
-/* Below this width the five buttons (168px each) no longer fit the fixed
+/* Below this width the four buttons (168px each) no longer fit the fixed
    top bar in one row, so it drops out of position:fixed into normal flow -
    letting it wrap onto a second row without overlapping the page - and the
    buttons shrink to a size that still fits three per row without wrapping
